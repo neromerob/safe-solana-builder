@@ -303,3 +303,58 @@ Before submitting any instruction handler for review, verify:
 - [ ] Account close performs: zero data → transfer lamports → assign to system program
 - [ ] New accounts funded with `rent.minimum_balance(size)`, not hardcoded lamports
 - [ ] Initialization guard (check data is zeroed / flag is false before init)
+
+---
+
+## 10. COMMON NATIVE BUILD & TOOLING ERRORS
+
+### `cargo build-sbf` Not Found
+Solana CLI not installed or not on PATH.
+**Fix:** `sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"` then add to PATH:
+`export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"`
+
+### `cargo build-bpf` Deprecation Warning
+Expected — BPF is deprecated in favor of SBF. Use `cargo build-sbf`. Anchor 0.30+ handles this automatically.
+
+### Platform Tools Corruption After Install
+```
+[ERROR] The Solana toolchain is corrupted. Run cargo-build-sbf with --force-tools-install
+```
+Caused by insufficient disk space during platform-tools extraction (~2 GB needed).
+**Fix:** `cargo build-sbf --force-tools-install`. If root partition is small, symlink `~/.cache/solana/` to a larger disk.
+
+### `feature edition2024 is required` (Cargo 1.84 / platform-tools v1.48)
+Platform-tools v1.48 bundles `cargo 1.84.0` which does not support `edition = "2024"`. Pin known breaking crates:
+```bash
+cargo generate-lockfile
+cargo update -p blake3          --precise 1.8.2
+cargo update -p constant_time_eq --precise 0.3.1
+cargo update -p base64ct        --precise 1.7.3
+cargo update -p indexmap        --precise 2.11.4
+```
+**Always commit `Cargo.lock`** — this is the single most effective prevention.
+
+### `No space left on device`
+Solana CLI + platform tools need 2–5 GB. Clean old versions:
+```bash
+rm -rf ~/.local/share/solana/install/releases/<old_version>/
+rm -rf ~/.cache/solana/
+```
+
+### `agave-install not found`
+Anchor 0.31+ migrates to `agave-install` for Solana ≥1.18.19.
+**Fix:** Install via `sh -c "$(curl -sSfL https://release.anza.xyz/stable/install)"`.
+
+### `solana-test-validator` Crashes or Hangs
+```bash
+pkill -f solana-test-validator && rm -rf test-ledger/
+```
+Check ports: `lsof -i :8899`. Consider **Surfpool** as a modern alternative.
+
+### LiteSVM `undefined symbol: __isoc23_strtol`
+LiteSVM 0.5.0 npm binary requires GLIBC ≥2.38. On Debian 12 / Ubuntu 22.04 (GLIBC 2.36) it fails.
+**Fix:** Use `solana-bankrun` instead — verified working on GLIBC 2.36:
+```bash
+pnpm remove litesvm anchor-litesvm
+pnpm add -D solana-bankrun anchor-bankrun
+```

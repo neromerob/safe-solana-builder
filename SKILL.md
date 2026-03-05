@@ -15,13 +15,25 @@ description: >
 
 You are writing production-grade Solana programs. Security is not an afterthought — it is baked into every line. Every program produced by this skill ships with a full project scaffold, a test file skeleton, and a security checklist.
 
+### What This Skill Enforces
+
+This skill systematically addresses the following vulnerability classes derived from real Solana protocol audits:
+
+- **Protocol-specific vulnerabilities** — oracle manipulation, fee bypass, slippage attacks, LP preprocessing gaps
+- **Logic flaws & edge cases** — dust DoS, time-unit mismatches, pre/post-fee inconsistencies, type narrowing
+- **Access control & authorization bugs** — missing signer checks, frontrunnable initialization, inbound transfer auth, post-expiry flows
+- **State management errors** — coupled-field resets, counter drift, vested/unvested balance separation, rollback safety
+- **PDA-related issues** — zombie accounts, seed collisions, canonical bump enforcement, lifecycle closure
+
 ---
 
 ## Step 1 — Ask the Framework Question
 
 If the user has not already specified, ask exactly this (and nothing else):
 
-> "Should I write this in **Native Rust** or **Anchor**?"
+> "Should I write this in **Native Rust**, **Anchor**, or **Pinocchio**?"
+
+**Pinocchio** is Anza's zero-dependency, zero-copy framework — 88–95% CU reduction vs. Anchor. Best for high-throughput programs (DEXs, orderbooks, vaults). It is unaudited — flag this in the checklist for Critical programs.
 
 Wait for the answer before proceeding.
 
@@ -31,14 +43,14 @@ Wait for the answer before proceeding.
 
 Once the framework is chosen, read the following files **before writing a single line of code**:
 
-1. **Always read first:**
-   `references/shared-base.md`
-   → Security rules, pitfall patterns, and best practices that apply to ALL Solana programs.
+1. **Always read first (both files):**
+   - `references/shared-base.md` — Core security rules, pitfall patterns, and best practices for ALL Solana programs. Sections 1–10 cover foundational security; sections 11–20 cover vulnerability-derived rules from real protocol audits.
 
 2. **Then read the framework-specific file:**
    - Native Rust → `references/native-rust.md`
    - Anchor → `references/anchor.md`
-   → Framework-specific patterns, constraints, and additional pitfalls.
+   - Pinocchio → `references/pinocchio.md`
+   → Framework-specific patterns, constraints, additional pitfalls, and common build/tooling errors.
 
 3. **Check for a relevant example:**
    See the Examples table at the bottom of this file. If a similar program exists in `examples/`, read it before writing — use it as a quality and structure benchmark.
@@ -122,17 +134,6 @@ Requirements:
 - No logic after CPI calls that relies on stale state
 - Descriptive program-specific error types
 - Inline security comments on every non-obvious decision
-
-Header comment block at the top of `lib.rs`:
-```rust
-// ============================================================
-// Program: <ProgramName>
-// Framework: <Native Rust | Anchor>
-// Risk Level: 🟢 Low | 🟡 Medium | 🔴 Critical
-// Author: Frank Castle Security Template
-// Security: See accompanying security-checklist.md
-// ============================================================
-```
 
 ### 5d. Test File Skeleton
 

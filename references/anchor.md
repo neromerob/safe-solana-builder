@@ -224,3 +224,58 @@ let new_balance = ctx.accounts.token_account.amount;
 | PDA derivation | `seeds + bump` constraint with stored canonical bump | User-supplied bump |
 | Memory resize | `realloc` with `zero_init = true` | Raw realloc without zeroing |
 | Error reporting | `#[error_code]` with descriptive messages | `ProgramError::Custom(0)` or panics |
+
+---
+
+## 8. COMMON ANCHOR BUILD & TOOLING ERRORS
+
+### GLIBC Version Too Old (`GLIBC_2.38` / `GLIBC_2.39` not found)
+Anchor 0.31+ requires GLIBC ≥2.38; Anchor 0.32+ requires ≥2.39. Ubuntu 24.04+ ships 2.39.
+**Fix:** Upgrade OS, or build Anchor CLI from source: `cargo install --git https://github.com/solana-foundation/anchor --tag v0.31.1 anchor-cli`
+
+### `proc_macro_span_shrink` / Rust 1.80 Incompatibility
+Anchor 0.30.x uses a `time` crate incompatible with Rust ≥1.80.
+**Fix:** Use AVM (auto-pins rustc 1.79 for Anchor <0.31), or upgrade to Anchor 0.31+.
+
+### `unexpected_cfg` Warnings
+Newer Rust versions are stricter about `cfg` conditions. Add to `Cargo.toml`:
+```toml
+[lints.rust]
+unexpected_cfgs = { level = "allow" }
+```
+Or upgrade to Anchor 0.31+.
+
+### IDL Build Fails (`anchor build` or `anchor idl build`)
+Ensure `idl-build` feature is enabled (required since 0.30.0):
+```toml
+[features]
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+```
+Debug with: `ANCHOR_LOG=1 anchor build`. Skip IDL with: `anchor build --no-idl`.
+
+### `module inner is private`
+Version mismatch between `anchor-lang` crate and Anchor CLI. Match versions in `Cargo.toml` and `Anchor.toml`.
+
+### `overflow-checks` Not Specified (Anchor 0.30+)
+```toml
+[profile.release]
+overflow-checks = true
+```
+
+### Anchor Version Migration Quick Reference
+
+**0.29 → 0.30:** Change `.accounts({...})` to `.accountsPartial({...})`. Add `idl-build` feature.
+
+**0.30 → 0.31:** Remove direct `solana-program`/`solana-sdk` deps; use `anchor_lang::prelude::*` instead.
+
+**0.31 → 0.32:** `solana-program` fully removed. Use `solana_pubkey::Pubkey` or `anchor_lang::prelude::*`. Duplicate mutable accounts now error — use `dup` constraint.
+
+### `Connection refused` / IPv6 in Tests
+Node.js 17+ resolves `localhost` to `::1` but `solana-test-validator` binds to `127.0.0.1`.
+**Fix:** Set `cluster = "http://127.0.0.1:8899"` in `Anchor.toml`, or use `NODE_OPTIONS="--dns-result-order=ipv4first"`.
+
+### `declare_program!` IDL Not Found
+Place IDL JSON in `idls/<program_name>.json` at workspace root (snake_case filename matching program name).
+
+### CLI / Crate Version Mismatch Warnings
+Warnings like `anchor-lang version(0.32.1) and CLI(0.30.1) don't match` are cosmetic — builds succeed. Match versions in `Anchor.toml [toolchain]` and install with `avm install <version>` to eliminate them.

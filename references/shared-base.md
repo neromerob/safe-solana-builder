@@ -245,3 +245,94 @@ For every account input in your program, ask:
 6. **"What's the worst-case scenario if this account's bump is not canonical?"** → PDA collision.
 
 Apply this curiosity to every design decision, not just during code review.
+
+---
+
+## 11. ORACLE VALIDATION
+
+- **Validate oracle confidence interval**: reject prices where `conf / price` exceeds a configurable threshold (e.g., 2–5%). Wide confidence means the price is unreliable — acting on it enables oracle manipulation.
+- **Check staleness**: verify the price timestamp is within a configurable max age. Never use a stale feed.
+- Make confidence and staleness thresholds admin-configurable, not hardcoded.
+- **Never use the current oracle price retroactively for settled positions.** Store the reference price at action time (borrow, deposit) in the account data and use it at settlement — not the live price.
+
+---
+
+## 12. FEE COMPLETENESS
+
+- Apply all fees to **every code path** — redemption, withdrawal, single-asset, multi-asset. Fee bypasses on edge-case routes are a consistent source of protocol drain.
+- Deduct fees from tracked totals (collateral value, pool balance) **atomically with the principal deduction** — never in a separate step that can be skipped or reordered.
+- Use a **consistent amount** (pre-fee or post-fee) for both capacity checks and execution. Mixing them causes overfills or incorrect limit-order behavior.
+- Apply fee calculations to the **input token** unless the protocol explicitly specifies output-side fees.
+
+---
+
+## 13. TOKEN DUST & TIME-LIMITED ACCOUNT DoS
+
+> Account close sequence (zero → lamports → assign to system program) is in §6.3. This section covers dust and lifecycle timing.
+
+- **Before closing any token account, sweep or burn the residual balance.** An attacker can deposit a dust amount to make `close` permanently fail (account poisoning DoS). Never assume balance is zero.
+- After any transfer, reload and verify the account balance to detect unexpected deposits.
+- Define a dust threshold. Either sweep dust to the protocol treasury or reject operations where remaining amount is below threshold. Never let dust block a settlement or close.
+- **Close time-limited accounts (offers, escrows, locks) at expiry.** Leaving expired accounts open leaks rent and enables griefing. Allow anyone — not just the creator — to trigger closure after expiry.
+- Avoid `init_if_needed` for accounts an adversary can pre-initialize with harmful state (also in anchor.md §2.4). Use `init` for one-time initialization.
+
+---
+
+## 14. STATE MANAGEMENT — COUPLED FIELDS & COUNTERS
+
+- Reset **all logically coupled fields atomically** in completion and close paths. Never leave a derived field (e.g., `shares_pending`, `rewards_owed`) non-zero after its parent quantity is zeroed. Inconsistent state breaks protocol invariants permanently.
+- When migrating positions, transfer **pending (locked)** and **withdrawable (matured)** balances as separate quantities. Never merge them or reapply a lockup to already-unlocked amounts.
+- Update all counters and statistics **atomically with the operation that triggers them** (fill count, volume, total supply). A counter that drifts out of sync is a protocol invariant violation and a potential exploit surface.
+
+---
+
+## 15. SHARED POSITION & POOL LOGIC
+
+- Before transferring shares or liquidity between positions, **preprocess both source and destination** (settle pending fees, snapshot reward accumulators). Skipping the destination lets a user claim fees they never earned, potentially draining the pool.
+- Never allow a no-op or self-transfer pattern to inflate fee claims. Verify `source != destination` before any share movement (also see §4 on duplicate accounts).
+- If directional fee asymmetry (buy vs. sell) is intentional, document and test it explicitly. If symmetry is required, apply fees on the input side for both directions.
+
+---
+
+## 16. CLOCK & TIMING
+
+- Use a **single canonical time unit** (slots *or* seconds) throughout all time-dependent logic. Mixing units silently corrupts comparisons — a vesting window in seconds compared to raw slots can unlock 4× earlier than intended.
+- When comparing durations across unit boundaries, apply the correct scale factor explicitly (e.g., multiply slot count by `SLOTS_PER_SECOND` before comparing to a seconds-based deadline).
+- Annotate time fields with their unit in code (`vesting_end_slot: u64`, `unlock_timestamp_secs: i64`) to prevent silent misuse as code evolves.
+
+---
+
+## 17. TOKEN / MINT INTEGRITY
+
+- Assert that the **mint close authority is `None`** during mint initialization. A mint with a close authority can be closed and re-initialized at the same address with different decimals, silently breaking all downstream accounting.
+- Store immutable mint properties (decimals, supply cap, authorities) at account creation. Re-validate them on **every instruction** that depends on them — do not assume they cannot change between calls.
+- Never allow a reinitialized account at a recycled address to inherit state from its previous lifetime. Validate all fields as if the account is fresh.
+
+---
+
+## 18. INPUT VALIDATION — PROTOCOL-LEVEL
+
+> Data length and instruction data validation are in native-rust.md §2 / anchor.md §1. This section covers protocol-semantic validation.
+
+- Validate token mints against a protocol allowlist or framework constraints (`mint::authority`, `mint::decimals`). An unconstrained mint allows arbitrary tokens to be injected into protocol flows.
+- Reject same-asset operations where distinct assets are required: `require!(input_mint != output_mint)`. Same-token operations can be exploited to manipulate fee accounting or pool invariants.
+- Enforce maximum sizes on variable-length inputs (messages, payloads, URIs) **before encoding**. Unbounded inputs cause compute overruns and silent log truncation.
+- Verify protocol-owned addresses (fee recipients, config accounts) are the expected, constrained accounts **before updating them**. An unconstrained update enables fee redirection to attacker-controlled accounts.
+
+---
+
+## 19. TYPE NARROWING & INTEGER SAFETY
+
+> Checked arithmetic and multiply-before-divide are in §3. This section covers type conversion safety.
+
+- Keep numeric types **consistent across instruction params, on-chain state, and emitted events**. Never silently narrow a wider integer type (e.g., `u64 → u32`). On-chain state and events diverge, breaking auditability.
+- Before any narrowing cast, assert an explicit upper-bound: `require!(val <= u32::MAX as u64, ErrorCode::Overflow)`.
+- Validate all amounts at **instruction entry** (`> 0`, within protocol min/max bounds) before passing them into math helpers. Deep validation catches bugs late and produces confusing error codes.
+
+---
+
+## 20. EVENT LOGGING
+
+- Keep individual log messages concise. Solana truncates transaction logs at ~10 KB per transaction — long free-form strings are silently dropped mid-audit trail.
+- Emit critical state (amounts, authorities, timestamps, before/after balances) as **structured, fixed-size on-chain events** — not free-form strings.
+- Never rely solely on logs for auditability. Persist critical state in on-chain accounts — logs are ephemeral and truncatable by the runtime.
