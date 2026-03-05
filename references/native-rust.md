@@ -205,12 +205,7 @@ invoke(
 Proper close sequence — never skip any step:
 
 ```rust
-// Step 1: Zero out all account data
-let mut data = account_to_close.try_borrow_mut_data()?;
-data.fill(0);
-drop(data);
-
-// Step 2: Transfer lamports to recipient
+// Step 1: Transfer lamports to recipient
 let dest_lamports = recipient.lamports();
 **recipient.lamports.borrow_mut() = dest_lamports
     .checked_add(account_to_close.lamports())
@@ -219,10 +214,14 @@ let dest_lamports = recipient.lamports();
 
 // Step 3: Assign ownership back to System Program
 account_to_close.assign(&system_program::ID);
+
+// Step 4: Realloc to 0 data len
+info.realloc(0, false)?;
 ```
 
-- Skipping step 1 (zeroing data) leaves the account revivable — an attacker can re-fund it and its old data becomes accessible again.
-- Skipping step 3 (reassigning owner) means your program still "owns" a zero-balance account, wasting space.
+- Skipping step 1 (zero lamports) recover all the lamports that were deposited for rent or other purposes
+- Skipping step 2 (reassigning owner) means your program still "owns" a zero-balance account, wasting space.
+- Skipping step 3 (realloc) we must realloc to zero bytes otherwise rent must be deposited
 - The recipient must be a trusted address — never arbitrary user-supplied.
 
 ---
