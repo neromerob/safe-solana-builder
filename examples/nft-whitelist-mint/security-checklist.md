@@ -1,6 +1,17 @@
 # Security Checklist — NFT Whitelist Mint
 
+## Risk Level
+
+🔴 Critical — SPL mint with Metaplex CPI chain, admin-controlled whitelist, SOL payments to a treasury pubkey, and program-derived mint authority; mistakes here can affect user funds and collection integrity.
+
+## High-Risk Decisions
+
+- **Single admin (`MintConfig.authority`)** — Can add or remove whitelist entries and receives all mint payments. This template has no timelock, multisig, or on-chain key rotation; production deployments should use a multisig or DAO for this role.
+- **Program upgrade authority** — Not set in application code. For mainnet, use a multisig or governance-controlled upgrade authority and document who holds it.
+- **MintConfig PDA as mint and metadata update authority** — Centralizes control over minting and metadata mutability until you add transfer or freeze instructions (see Known Limitations).
+
 ## Framework
+
 Anchor
 
 ---
